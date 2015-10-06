@@ -41,6 +41,9 @@ Bonus:
 
 - Screen Edge Pan gesture ignores the message pan gesture.
 - The inbox and archive views snap their scrollviews if the search field is partially open.
+- The demo message can be scrolled.
+	- If initiating scrolling from the demo message, it will not move left or right.
+	- If dragging the demo message left or right, it will not scroll.
 
 
 Walkthrough:
