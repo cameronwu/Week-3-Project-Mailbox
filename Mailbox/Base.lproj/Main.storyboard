@@ -60,9 +60,6 @@
                                                                 <rect key="frame" x="0.0" y="0.0" width="320" height="86"/>
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <gestureRecognizers/>
-                                                                <connections>
-                                                                    <outletCollection property="gestureRecognizers" destination="VbA-Lf-7bx" appends="YES" id="0wl-mX-rob"/>
-                                                                </connections>
                                                             </imageView>
                                                         </subviews>
                                                         <color key="backgroundColor" red="0.8901960784313725" green="0.8901960784313725" blue="0.8901960784313725" alpha="1" colorSpace="calibratedRGB"/>
@@ -184,18 +181,12 @@
                         <outlet property="mailboxSegmentedControl" destination="caG-J8-7ED" id="47h-Lc-vRb"/>
                         <outlet property="messageContainerView" destination="Cyh-KQ-HQl" id="YRX-HP-EOl"/>
                         <outlet property="messageImageView" destination="i11-GR-63e" id="V6j-c4-gwN"/>
-                        <outlet property="messagePanGestureRecognizer" destination="VbA-Lf-7bx" id="WAL-UX-7DN"/>
                         <outlet property="navLayerBottom" destination="DBS-kS-8Gf" id="2t6-ev-oBQ"/>
                         <outlet property="navLayerTop" destination="Kyg-2b-jas" id="zu9-m2-xee"/>
                         <outlet property="rightIconImageView" destination="iqE-xy-sOM" id="FSy-C6-sdE"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
-                <panGestureRecognizer minimumNumberOfTouches="1" id="VbA-Lf-7bx">
-                    <connections>
-                        <action selector="messagePan:" destination="BYZ-38-t0r" id="3Fw-t6-lsp"/>
-                    </connections>
-                </panGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="162" y="347"/>
         </scene>

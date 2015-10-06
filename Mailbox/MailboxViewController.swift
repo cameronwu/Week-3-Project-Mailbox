@@ -22,7 +22,6 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
     @IBOutlet weak var archiveScrollView: UIScrollView!
     @IBOutlet weak var messageContainerView: UIView!
     @IBOutlet weak var messageImageView: UIImageView!
-    @IBOutlet var messagePanGestureRecognizer: UIPanGestureRecognizer!
     @IBOutlet weak var leftIconImageView: UIImageView!
     @IBOutlet weak var rightIconImageView: UIImageView!
     @IBOutlet weak var composeMasterView: UIView!
@@ -30,21 +29,27 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
     @IBOutlet weak var composeImageView: UIImageView!
     @IBOutlet weak var composeToTextField: UITextField!
     
+    // Overlay
     var overlayView: UIImageView!
     var closeOverlayGesture: UITapGestureRecognizer!
     
+    // Menu
     var edgeGesture: UIScreenEdgePanGestureRecognizer!
     var menuClosePanGesture: UIPanGestureRecognizer!
     var menuCloseTapGesture: UITapGestureRecognizer!
     let openPosition: CGFloat = 285
     var masterCurrentXPosition: CGFloat!
     
+    // Feed
     var feedScrollCurrentYPosition: CGFloat!
-    
     let initialFeedPosition: CGFloat = 165
     let initialFeedImageHeight: CGFloat = 86
     let initialContentSize: CGSize = CGSizeMake(320, 1367.5)
     
+    // Message
+    var messagePanGestureRecognizer: UIPanGestureRecognizer!
+    
+    // Setup
     let defaultTransitionTime: NSTimeInterval = 0.3
     var previousTab = 1
     
@@ -87,9 +92,13 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
         rightIconImageView.center = CGPointMake(290, messageImageView.center.y)
         
         edgeGesture = UIScreenEdgePanGestureRecognizer(target: self, action: "menuPan:")
-        edgeGesture.edges = UIRectEdge.Left
+        edgeGesture.edges = .Left
         edgeGesture.delegate = self
         mailboxMasterView.addGestureRecognizer(edgeGesture)
+        
+        messagePanGestureRecognizer = UIPanGestureRecognizer(target: self, action: "messagePan:")
+        messagePanGestureRecognizer.delegate = self
+        messageImageView.addGestureRecognizer(messagePanGestureRecognizer)
         
         undoController.addAction(cancelAction)
         undoController.addAction(undoAction)
@@ -126,12 +135,8 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
         }
     }
     
-    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailByGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
-        if gestureRecognizer is UIScreenEdgePanGestureRecognizer {
-            return true
-        } else {
-            return false
-        }
+    func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        return true
     }
     
     
@@ -146,11 +151,15 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
             print("Menu pan began.")
             masterCurrentXPosition = mailboxMasterView.frame.origin.x
             contentView.userInteractionEnabled = false
+            messagePanGestureRecognizer.enabled = false
+            self.feedScrollView.scrollEnabled = false
+            self.archiveScrollView.scrollEnabled = false
         } else if sender.state == .Changed {
             print("Menu is panning.")
             if mailboxMasterView.frame.origin.x >= 0 && mailboxMasterView.frame.origin.x <= 320 {
                 mailboxMasterView.frame.origin.x = masterCurrentXPosition + translation.x
             }
+            messageImageView.frame.origin.x = 0 // Prevent gesture recognizer from disabling too late
         } else if sender.state == .Ended {
             print("Menu pan ended.")
             releaseLeftOrRight(velocity)
@@ -191,6 +200,9 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
                     self.mailboxMasterView.removeGestureRecognizer(self.menuCloseTapGesture)
                 }
                 self.contentView.userInteractionEnabled = true
+                self.messagePanGestureRecognizer.enabled = true
+                self.feedScrollView.scrollEnabled = true
+                self.archiveScrollView.scrollEnabled = true
         })
     }
     
@@ -201,7 +213,7 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
     
     // Message Pan, Position, and Reset Functions ------
 
-    @IBAction func messagePan(sender: UIPanGestureRecognizer) {
+    func messagePan(sender: UIPanGestureRecognizer) {
         if sender.state == .Began {
             print("Dragging began.")
         } else if sender.state == .Changed {
@@ -209,10 +221,14 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
             if let view = sender.view {
                 view.center = CGPoint(x:view.center.x + translation.x,
                     y:view.center.y)
+                if view.center.x < 170 || view.center.x > 190 {
+                    self.feedScrollView.scrollEnabled = false
+                } else {
+                    self.feedScrollView.scrollEnabled = true
+                }
             }
             sender.setTranslation(CGPointZero, inView: self.view)
             updateMessageState(checkPosition(self.messageImageView))
-            //feedScrollView.contentOffset.y = feedScrollView.contentOffset.y - translation.y
         } else if sender.state == .Ended {
             print("Dragging ended.")
             switch checkPosition(self.messageImageView) {
@@ -243,6 +259,7 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
                         self.closeAndResetMessage()
                 })
             }
+            self.feedScrollView.scrollEnabled = true
         }
     }
     
@@ -398,8 +415,15 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
         self.composeContentView.endEditing(true)
     }
     
+
+    // Scroll ------------------------------------------
     
-    // Scroll Snapping ---------------------------------
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        if scrollView == self.feedScrollView {
+            self.messageImageView.frame.origin.x = 0
+            self.messagePanGestureRecognizer?.enabled = false
+        }
+    }
     
     func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         print("Scroll drag stopped for \(scrollView)")
@@ -432,6 +456,11 @@ class MailboxViewController: UIViewController, UIScrollViewDelegate, UIGestureRe
                     }, completion: nil)
             }
         }
+        self.messagePanGestureRecognizer?.enabled = true
+    }
+    
+    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+        self.messagePanGestureRecognizer?.enabled = true
     }
     
     // Switch Tabs -------------------------------------
